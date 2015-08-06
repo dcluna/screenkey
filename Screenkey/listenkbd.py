@@ -174,12 +174,21 @@ class ListenKbd(threading.Thread):
             if not recent and (datetime.now() - key.stamp).total_seconds() < self.recent_thr:
                 recent = True
                 markup += '<u>'
-            markup += '\u200c' + glib.markup_escape_text(key.repl)
+            escaped_key_repl = glib.markup_escape_text(key.repl)
+            self.logger.debug("escaped_key_repl is: " + key.repl)
+            codepoints = map(ord, key.repl)
+            self.logger.debug("codepoints are: " + str(codepoints))
+            # for some reason, in my system it screws formatting when running
+            # this, so yeah, quick dirty hack to make it work
+            if codepoints == [65107]:
+                escaped_key_repl = '~'
+            elif codepoints == [65106]:
+                escaped_key_repl = '^'
+            markup += '\u200c' + escaped_key_repl
         if recent:
             markup += '</u>'
         self.logger.debug("Label updated: %s." % markup)
         glib.idle_add(lambda: self.listener(markup))
-
 
     def key_press(self, reply):
         with self.mutex:
